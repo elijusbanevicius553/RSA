@@ -22,6 +22,7 @@ namespace RSA
         public Form1()
         {
             InitializeComponent();
+            AtnaujintiDB();
         }
 
         private void button_encrypt_Click(object sender, EventArgs e)
@@ -48,14 +49,39 @@ namespace RSA
 
         private void button_rinktisdb_Click(object sender, EventArgs e)
         {
+            SQLiteConnection conn = new SQLiteConnection(source);
+            Isvalyti();
 
+            string pasirinko = "";
+            pasirinko = comboBox1.SelectedItem.ToString();
+            conn.Open();
+            string query = "select id from decrypted where data = '" + pasirinko + "'";
+            SQLiteCommand cmd = new SQLiteCommand(query, conn);
+            SQLiteDataReader reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                pasirinko = Convert.ToString(reader[0]);
+            }
+            reader.Close();
+
+            query = "select n, e, text from decrypted where id = '" + pasirinko + "'";
+            cmd = new SQLiteCommand(query, conn);
+            reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                textBox_n.Text = Convert.ToString(reader[0]);
+                textBox_e.Text = Convert.ToString(reader[1]);
+                textBox_fresh.Text = Convert.ToString(reader[2]);
+            }
+            reader.Close();
+            conn.Close();
         }
 
         private void button_savetodb_Click(object sender, EventArgs e)
         {
             SQLiteConnection conn = new SQLiteConnection(source);
             string data = DateTime.Now.ToString();
-            string query = "insert into decrypted values (NULL, '" + data + "','" + textBox_d.Text + "','" + textBox_result.Text +"')";
+            string query = "insert into decrypted values (NULL, '" + data + "','" + textBox_n.Text +"','" + textBox_e.Text + "','" + textBox_result.Text +"')";
             SQLiteCommand cmd = new SQLiteCommand(query, conn);
             conn.Open();
             cmd = new SQLiteCommand(query, conn);
@@ -64,6 +90,7 @@ namespace RSA
             conn.Close();
 
             AtnaujintiDB();
+            Isvalyti();
         }
 
         private void AtnaujintiDB()
@@ -80,6 +107,18 @@ namespace RSA
             dr.Close();
         }
 
+        private void Isvalyti()
+        {
+            textBox_n.Clear();
+            textBox_fi.Clear();
+            textBox_d.Clear();
+            textBox_e.Clear();
+            textBox_fresh.Clear();
+            textBox_p.Clear();
+            textBox_q.Clear();
+            textBox_result.Clear();
+        }
+
         public string Encrypt(string msg)
         {
             n = Convert.ToInt32(textBox_p.Text) * Convert.ToInt32(textBox_q.Text);
@@ -92,15 +131,32 @@ namespace RSA
             return str;
         }
 
+        public void DecryptionCalculation(string n)
+        {
+            int a = Convert.ToInt32(n);
+            int factor = 0;
+            int[] mas = new int[4];
+            int i = 0;
+            for (factor = 1; factor <= a; factor++)
+            {
+                if (a % factor == 0)
+                {
+                    mas[i] = factor;
+                    i++;
+                }
+            }
+            textBox_p.Text = mas[1].ToString();
+            textBox_q.Text = mas[2].ToString();
+        }
+
         public string Decrypt(string msg)
         {
-            n = Convert.ToInt32(textBox_p.Text) * Convert.ToInt32(textBox_q.Text);
-            d = Convert.ToInt32(textBox_d.Text);
+            DecryptionCalculation(textBox_n.Text);
             string rez = "";
-            foreach (char c in msg)
-            {
-                rez += (char)BigInteger.ModPow((int)c, d, n);
-            }
+            // foreach (char c in msg)
+             //  {
+            //       rez += (char)BigInteger.ModPow((int)c, d, n);
+             //   }
             return rez;
         }
 
@@ -111,7 +167,12 @@ namespace RSA
             List<BigInteger> Possible_e = new List<BigInteger>();
 
             n = p * q;
+
+            textBox_n.Text = n.ToString();
+
             fi = (p - 1) * (q - 1);
+
+            textBox_fi.Text = fi.ToString();
 
             int amount = 0;
 
