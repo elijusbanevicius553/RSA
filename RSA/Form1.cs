@@ -17,6 +17,7 @@ namespace RSA
 
         public int p, q;
         public BigInteger n, fi, e, d;
+        string source = @"Data source=C:\Users\Elijus\Desktop\RSA\database.db;Version=3;";
 
         public Form1()
         {
@@ -28,20 +29,55 @@ namespace RSA
             p = Convert.ToInt32(textBox_p.Text);
             q = Convert.ToInt32(textBox_q.Text);
 
-            //Patikrinam ar p ir q yra pirminiai skaičiai.
             if (IsPrime(p) == true && IsPrime(q) == true)
             {
                 Keys();
+
+                textBox_result.Text = Encrypt(textBox_fresh.Text);
             }
             else
                 MessageBox.Show("Vienas arba abu skaiciai nera pirminiai");
 
         }
-            
-        private void button1_Click(object sender, EventArgs e)
+
+
+        private void button_decrypt_Click(object sender, EventArgs e)
         {
-            textBox_result.Text = Encrypt(textBox_fresh.Text);
-            textBox_test.Text = Decrypt(textBox_result.Text);
+            textBox_result.Text = Decrypt(textBox_fresh.Text);
+        }
+
+        private void button_rinktisdb_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void button_savetodb_Click(object sender, EventArgs e)
+        {
+            SQLiteConnection conn = new SQLiteConnection(source);
+            string data = DateTime.Now.ToString();
+            string query = "insert into decrypted values (NULL, '" + data + "','" + textBox_d.Text + "','" + textBox_result.Text +"')";
+            SQLiteCommand cmd = new SQLiteCommand(query, conn);
+            conn.Open();
+            cmd = new SQLiteCommand(query, conn);
+            cmd.ExecuteNonQuery();
+            MessageBox.Show("Inserted sucessfully");
+            conn.Close();
+
+            AtnaujintiDB();
+        }
+
+        private void AtnaujintiDB()
+        {
+            comboBox1.Items.Clear();
+            SQLiteConnection conn = new SQLiteConnection(source);
+            conn.Open();
+
+            string query = "select data from decrypted";
+            SQLiteCommand cmd = new SQLiteCommand(query, conn);
+            SQLiteDataReader dr = cmd.ExecuteReader();
+            while (dr.Read())
+                comboBox1.Items.Add(Convert.ToString(dr[0]));
+            dr.Close();
         }
 
         public string Encrypt(string msg)
