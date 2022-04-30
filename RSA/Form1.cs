@@ -131,8 +131,9 @@ namespace RSA
             return str;
         }
 
-        public void DecryptionCalculation(string n)
+        public void DecryptionCalculation(string n, string z)
         {
+            Random r = new Random();
             int a = Convert.ToInt32(n);
             int factor = 0;
             int[] mas = new int[4];
@@ -147,16 +148,46 @@ namespace RSA
             }
             textBox_p.Text = mas[1].ToString();
             textBox_q.Text = mas[2].ToString();
+
+            p = Convert.ToInt32(textBox_p.Text);
+            q = Convert.ToInt32(textBox_q.Text);
+
+            fi = (p - 1) * (q - 1);
+
+            textBox_fi.Text = fi.ToString();
+
+            e = Convert.ToInt32(z);
+
+            List<BigInteger> Possible_d = new List<BigInteger>();
+            int amount = 0;
+            for (d = p; d < fi; d++)
+            {
+                if (e * d % fi == 1)
+                {
+                    Possible_d.Add(d);
+
+                    if (amount == 10)
+                    {
+                        break;
+                    }
+                }
+            }
+
+            d = Possible_d[r.Next(0, Possible_d.Count)];
+            textBox_d.Text = Convert.ToString(d);
+
+
         }
 
         public string Decrypt(string msg)
         {
-            DecryptionCalculation(textBox_n.Text);
+            DecryptionCalculation(textBox_n.Text, textBox_e.Text);
             string rez = "";
-            // foreach (char c in msg)
-             //  {
-            //       rez += (char)BigInteger.ModPow((int)c, d, n);
-             //   }
+
+            foreach (char c in msg)
+            {
+                 rez += (char)BigInteger.ModPow((int)c, d, n);
+            }
             return rez;
         }
 
